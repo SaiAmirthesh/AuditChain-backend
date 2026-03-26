@@ -35,7 +35,7 @@ public class UserController {
     @GetMapping("/transactions")
     public List<Transaction> transactions() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        return transactionRepository.findTop10ByFromAccountOrToAccountOrderByTimestampDesc(username, username);
+        return transactionRepository.findUserTransactions(username);
     }
 
     @PostMapping("/transfer")

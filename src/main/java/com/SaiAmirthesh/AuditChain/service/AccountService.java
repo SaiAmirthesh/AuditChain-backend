@@ -4,6 +4,7 @@ import com.SaiAmirthesh.AuditChain.entity.Account;
 import com.SaiAmirthesh.AuditChain.entity.Transaction;
 import com.SaiAmirthesh.AuditChain.repository.AccountRepository;
 import com.SaiAmirthesh.AuditChain.repository.TransactionRepository;
+import com.SaiAmirthesh.AuditChain.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,9 @@ public class AccountService {
     
     @Autowired
     private AccountRepository accountRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Autowired
     private TransactionRepository transactionRepository;
@@ -32,6 +36,10 @@ public class AccountService {
 
         if (from == null || to == null) {
             throw new IllegalArgumentException("One or both accounts do not exist");
+        }
+
+        if (userRepository.findByUsername(toAcc) == null) {
+            throw new IllegalArgumentException("Recipient user does not exist");
         }
 
         if (from.getBalance() < amount) {
