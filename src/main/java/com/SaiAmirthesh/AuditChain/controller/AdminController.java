@@ -5,9 +5,13 @@ import com.SaiAmirthesh.AuditChain.entity.Transaction;
 import com.SaiAmirthesh.AuditChain.repository.AccountRepository;
 import com.SaiAmirthesh.AuditChain.repository.TransactionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import com.SaiAmirthesh.AuditChain.service.AnalyticsService;
+import com.SaiAmirthesh.AuditChain.service.AIAgentService;
+import com.SaiAmirthesh.AuditChain.dto.AdminAnalyticsDTO;
 
 import java.util.HashMap;
 import java.util.List;
@@ -29,6 +33,12 @@ public class AdminController {
     @Autowired
     private com.SaiAmirthesh.AuditChain.repository.AlertRepository alertRepository;
 
+    @Autowired
+    private AnalyticsService analyticsService;
+
+    @Autowired
+    private AIAgentService aiAgentService;
+
     @org.springframework.web.bind.annotation.DeleteMapping("/reset-all")
     public String resetAll() {
         auditRepository.deleteAll();
@@ -42,8 +52,10 @@ public class AdminController {
     }
 
     @GetMapping("/transactions")
-    public List<Transaction> getTransactions() {
-        return transactionRepository.findAll();
+    public Page<Transaction> getTransactions(@RequestParam(defaultValue = "0") int page, 
+                                           @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return transactionRepository.findAllByOrderByTimestampDesc(pageable);
     }
 
     @GetMapping("/dashboard")
@@ -52,9 +64,8 @@ public class AdminController {
         dashboard.put("totalAccounts", accountRepository.count());
         dashboard.put("totalTransactions", transactionRepository.count());
         
-        List<Transaction> recentTransactions = transactionRepository.findAll();
-        dashboard.put("recentTransactions", 
-            recentTransactions.subList(0, Math.min(recentTransactions.size(), 10)));
+        Page<Transaction> recentTransactions = transactionRepository.findAllByOrderByTimestampDesc(PageRequest.of(0, 10));
+        dashboard.put("recentTransactions", recentTransactions.getContent());
         
         return dashboard;
     }
@@ -72,8 +83,10 @@ public class AdminController {
     }
 
     @GetMapping("/logs")
-    public List<com.SaiAmirthesh.AuditChain.entity.AuditLog> getLogs() {
-        return auditRepository.findAllByOrderByIdAsc();
+    public Page<com.SaiAmirthesh.AuditChain.entity.AuditLog> getLogs(@RequestParam(defaultValue = "0") int page, 
+                                                                  @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return auditRepository.findAllByOrderByIdAsc(pageable);
     }
 
     @org.springframework.web.bind.annotation.PutMapping("/tamper/{id}")
@@ -90,5 +103,17 @@ public class AdminController {
     public String deleteSpecificLog(@org.springframework.web.bind.annotation.PathVariable Long id) {
         auditRepository.deleteById(id);
         return "SUCCESS: Log maliciously deleted";
+    }
+
+    @GetMapping("/ai-intelligence")
+    public String getAiIntelligence() {
+        AdminAnalyticsDTO data = analyticsService.getAdminAnalytics();
+        return aiAgentService.getAdminIntelligence(data);
+    }
+
+    @PostMapping("/maintenance")
+    public String runMaintenance() {
+        analyticsService.runSystemMaintenance();
+        return "SUCCESS: System-wide anomaly detection and risk scoring recalibrated.";
     }
 }

@@ -28,13 +28,16 @@ public class GeminiService {
         }
 
         StringBuilder promptBuilder = new StringBuilder();
-        promptBuilder.append("You are an expert financial auditor AI. Only narrate what is the issue from the alerts table or audit log chain broken response. Be extremely concise. Do not waste tokens generating other stuffs.\\n\\n");
+        promptBuilder.append("You are an expert financial auditor AI. Only narrate what is the issue from the alerts table. Be extremely concise. Do not waste tokens.\\n\\n");
         for (Alert alert : alerts) {
             promptBuilder.append("- Alert [").append(alert.getStatus()).append("]: ").append(alert.getAlertMessage()).append("\\n");
         }
 
-        String prompt = promptBuilder.toString();
-        String jsonPayload = "{\"contents\":[{\"parts\":[{\"text\":\"" + prompt.replace("\"", "\\\"") + "\"}]}]}";
+        return generateContent(promptBuilder.toString());
+    }
+
+    public String generateContent(String prompt) {
+        String jsonPayload = "{\"contents\":[{\"parts\":[{\"text\":\"" + prompt.replace("\"", "\\\"").replace("\n", "\\n") + "\"}]}]}";
 
         try {
             HttpClient client = HttpClient.newHttpClient();
@@ -45,8 +48,8 @@ public class GeminiService {
                     .build();
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
             String responseBody = response.body();
+
             String textMarker = "\"text\": \"";
             int start = responseBody.indexOf(textMarker);
             if (start != -1) {
@@ -58,7 +61,6 @@ public class GeminiService {
             return "Failed to parse AI response: " + responseBody;
 
         } catch (Exception e) {
-            e.printStackTrace();
             return "Error calling Gemini API: " + e.getMessage();
         }
     }

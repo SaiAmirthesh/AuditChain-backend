@@ -1,13 +1,7 @@
--- AUDITCHAIN: FULL DATABASE & CRYPTOGRAPHIC TRIGGER SETUP
--- THIS SCRIPT WILL:
--- 1. Create the Database
--- 2. Define Tables exactly matching Hibernate/Java naming conventions
--- 3. Install Unified Secure Hash-Chaining Triggers (Genesis Ready)
 
 CREATE DATABASE IF NOT EXISTS AuditChain;
 USE AuditChain;
 
--- 1. DROP EXISTING OBJECTS (FOR RESET)
 DROP TRIGGER IF EXISTS after_account_update;
 DROP TRIGGER IF EXISTS after_account_insert;
 DROP TRIGGER IF EXISTS after_account_delete;
@@ -21,7 +15,6 @@ DROP TABLE IF EXISTS transactions;
 DROP TABLE IF EXISTS accounts;
 DROP TABLE IF EXISTS users;
 
--- 2. CREATE TABLES
 CREATE TABLE users (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(255) NOT NULL UNIQUE,
@@ -65,7 +58,6 @@ CREATE TABLE alerts (
     visible_to VARCHAR(50)
 );
 
--- 3. CRYPTOGRAPHIC TRIGGERS
 DELIMITER $$
 
 -- A. INSERT TRIGGER (Genesis & Initial Balances)
@@ -101,7 +93,6 @@ BEGIN
             JSON_OBJECT('id', NEW.id, 'accountNumber', NEW.account_number, 'balance', NEW.balance), last_hash, new_hash);
 END$$
 
--- B. UPDATE TRIGGER (Secure Chaining)
 CREATE TRIGGER after_account_update
 AFTER UPDATE ON accounts
 FOR EACH ROW
@@ -137,7 +128,6 @@ BEGIN
     END IF;
 END$$
 
--- C. DELETE TRIGGER (Tamper Detection for row deletions)
 CREATE TRIGGER after_account_delete
 AFTER DELETE ON accounts
 FOR EACH ROW
@@ -151,7 +141,6 @@ BEGIN
     SET last_hash = COALESCE(last_hash, '0');
     SET formatted_date = DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s');
 
-    -- newData is empty string for DELETE
     SET data_to_hash = CONCAT(
         'account',
         'DELETE',

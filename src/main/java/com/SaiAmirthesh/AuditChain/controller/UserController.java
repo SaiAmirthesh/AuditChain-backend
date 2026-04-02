@@ -5,14 +5,17 @@ import com.SaiAmirthesh.AuditChain.entity.Transaction;
 import com.SaiAmirthesh.AuditChain.repository.AccountRepository;
 import com.SaiAmirthesh.AuditChain.repository.TransactionRepository;
 import com.SaiAmirthesh.AuditChain.service.AccountService;
+import com.SaiAmirthesh.AuditChain.service.AnalyticsService;
+import com.SaiAmirthesh.AuditChain.service.AIAgentService;
+import com.SaiAmirthesh.AuditChain.dto.UserAnalyticsDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.web.bind.annotation.*;
+import java.util.Map;
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("/user")
@@ -26,16 +29,31 @@ public class UserController {
     @Autowired
     private TransactionRepository transactionRepository;
 
+    @Autowired
+    private AnalyticsService analyticsService;
+
+    @Autowired
+    private AIAgentService aiAgentService;
+
     @GetMapping("/dashboard")
-    public Account dashboard() {
+    public Map<String, Object> dashboard() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        return accountRepository.findByAccountNumber(username); // Using username as account number placeholder, adjust based on actual design
+        Account account = accountRepository.findByAccountNumber(username);
+        UserAnalyticsDTO analytics = analyticsService.getUserAnalytics(username);
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("account", account);
+        response.put("totalIncome", analytics.getTotalIncome());
+        response.put("totalExpense", analytics.getTotalExpense());
+        return response;
     }
 
     @GetMapping("/transactions")
-    public List<Transaction> transactions() {
+    public Page<Transaction> transactions(@RequestParam(defaultValue = "0") int page, 
+                                        @RequestParam(defaultValue = "10") int size) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        return transactionRepository.findUserTransactions(username);
+        Pageable pageable = PageRequest.of(page, size);
+        return transactionRepository.findByFromAccountOrToAccountOrderByTimestampDesc(username, username, pageable);
     }
 
     @PostMapping("/transfer")
@@ -46,5 +64,12 @@ public class UserController {
             request.getToAccount(), 
             request.getAmount()
         );
+    }
+
+    @GetMapping("/ai-insights")
+    public String getAiInsights() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        UserAnalyticsDTO data = analyticsService.getUserAnalytics(username);
+        return aiAgentService.getUserInsights(data);
     }
 }
