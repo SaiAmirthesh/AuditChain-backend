@@ -30,7 +30,11 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     @Query(value = "call update_account_risk_scores()", nativeQuery = true)
     void callUpdateAccountRiskScores();
 
-    @Query(value = "select category, sum(amount) as amount, count(*) as count from transactions where from_account = :acc group by category", nativeQuery = true)
+    @Query(value = "select t.category, sum(t.amount) as amount, count(*) as count " +
+                   "from transactions t " +
+                   "join accounts a on t.from_account = a.account_number " +
+                   "where a.account_number = :acc " +
+                   "group by t.category", nativeQuery = true)
     List<Object[]> getUserCategorySpending(@Param("acc") String acc);
 
     @Query(value = "select sum(case when to_account = :acc then amount else 0 end) as income, sum(case when from_account = :acc then amount else 0 end) as expense from transactions where from_account = :acc or to_account = :acc", nativeQuery = true)
@@ -39,9 +43,31 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     @Query(value = "select count(*) as total_count, sum(amount) as total_volume, avg(amount) as avg_val from transactions", nativeQuery = true)
     Map<String, Object> getAdminSystemMetrics();
 
-    @Query(value = "select status, count(*) as count from transactions group by status", nativeQuery = true)
+    @Query(value = "select t.status, count(*) as count " +
+                   "from transactions t " +
+                   "join accounts a on t.from_account = a.account_number " +
+                   "group by t.status", nativeQuery = true)
     List<Object[]> getAdminStatusDistribution();
 
-    @Query(value = "select channel, count(*) as count from transactions group by channel", nativeQuery = true)
+    @Query(value = "select t.channel, count(*) as count " +
+                   "from transactions t " +
+                   "join accounts a on t.from_account = a.account_number " +
+                   "group by t.channel", nativeQuery = true)
     List<Object[]> getAdminChannelUsage();
+
+    @Query(value = "select range_name, count(*) as count from (" +
+                   "  select case " +
+                   "    when amount <= 10000 then '0-10k' " +
+                   "    when amount <= 50000 then '10k-50k' " +
+                   "    when amount <= 100000 then '50k-1L' " +
+                   "    else '1L+' " +
+                   "  end as range_name from transactions" +
+                   ") as buckets group by range_name", nativeQuery = true)
+    List<Object[]> getAdminValueRangeDistribution();
+
+    @Query(value = "select t.location, count(*) as count " +
+                   "from transactions t " +
+                   "join accounts a on t.from_account = a.account_number " +
+                   "group by t.location", nativeQuery = true)
+    List<Object[]> getAdminGeographyDistribution();
 }

@@ -54,7 +54,17 @@ public class AnalyticsService {
                 .map(res -> new AdminAnalyticsDTO.ChannelCount((String) res[0], ((Number) res[1]).longValue()))
                 .collect(Collectors.toList());
 
-        return new AdminAnalyticsDTO(totalCount, totalVolume, avgVal, statusDistribution, channelUsage);
+        List<Object[]> rangeResults = transactionRepository.getAdminValueRangeDistribution();
+        List<AdminAnalyticsDTO.ValueRangeCount> valueBuckets = rangeResults.stream()
+                .map(res -> new AdminAnalyticsDTO.ValueRangeCount((String) res[0], ((Number) res[1]).longValue()))
+                .collect(Collectors.toList());
+
+        List<Object[]> geoResults = transactionRepository.getAdminGeographyDistribution();
+        List<AdminAnalyticsDTO.LocationCount> locationDistribution = geoResults.stream()
+                .map(res -> new AdminAnalyticsDTO.LocationCount((String) res[0], ((Number) res[1]).longValue()))
+                .collect(Collectors.toList());
+
+        return new AdminAnalyticsDTO(totalCount, totalVolume, avgVal, statusDistribution, channelUsage, valueBuckets, locationDistribution);
     }
 
     public void runSystemMaintenance() {

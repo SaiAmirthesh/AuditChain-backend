@@ -116,4 +116,9 @@ public class AdminController {
         analyticsService.runSystemMaintenance();
         return "SUCCESS: System-wide anomaly detection and risk scoring recalibrated.";
     }
+
+    @GetMapping("/analytics")
+    public AdminAnalyticsDTO getAnalytics() {
+        return analyticsService.getAdminAnalytics();
+    }
 }

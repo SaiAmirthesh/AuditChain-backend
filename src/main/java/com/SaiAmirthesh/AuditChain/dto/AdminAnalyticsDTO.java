@@ -14,6 +14,8 @@ public class AdminAnalyticsDTO {
     private double avgTxValue;
     private List<StatusCount> statusDistribution;
     private List<ChannelCount> channelUsage;
+    private List<ValueRangeCount> txValueBuckets;
+    private List<LocationCount> locationDistribution;
 
     @Data
     @AllArgsConstructor
@@ -28,6 +30,22 @@ public class AdminAnalyticsDTO {
     @NoArgsConstructor
     public static class ChannelCount {
         private String channel;
+        private long count;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class ValueRangeCount {
+        private String range;
+        private long count;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class LocationCount {
+        private String location;
         private long count;
     }
 }

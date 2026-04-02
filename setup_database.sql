@@ -45,10 +45,25 @@ CREATE TABLE audit_log (
 
 CREATE TABLE transactions (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    from_account VARCHAR(255),
-    to_account VARCHAR(255),
-    amount DOUBLE,
-    timestamp DATETIME
+    
+    from_account VARCHAR(255) NOT NULL,   -- Originator's account number
+    to_account VARCHAR(255) NOT NULL,     -- Recipient's account number
+    amount DOUBLE NOT NULL,               -- Transaction volume (precisely 2 decimal places)
+    transaction_type VARCHAR(50) DEFAULT 'transfer', -- e.g., 'transfer', 'withdrawal', 'deposit'
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,    -- Temporal anchor for audit chaining
+    status VARCHAR(30) DEFAULT 'completed',           -- 'completed', 'pending', 'flagged', 'refused'
+    
+    description VARCHAR(500),             -- Optional narrative of transaction purpose
+    category VARCHAR(100) DEFAULT 'general', -- e.g., 'Shopping', 'Utilities', 'Taxes'
+    channel VARCHAR(50) DEFAULT 'web',    -- Origin: 'web', 'mobile', 'api', 'atms'
+
+    ip_address VARCHAR(45),               -- Client's Network ID (IPv4 or IPv6)
+    device_info VARCHAR(255),             -- Hardware/OS fingerprint (User-Agent or Token)
+    location VARCHAR(255),                -- Geolocation derived from IP (e.g., "London, UK")
+    
+    risk_score DECIMAL(5,2) DEFAULT 0.00, -- Probability of threat (0.0 to 100.0) calculated by AI
+    flagged BOOLEAN DEFAULT FALSE,        -- Hard-trigger for Auditor review if risk exceeds threshold
+    flag_reason VARCHAR(500)              -- Descriptive reason for flagging (e.g., "Anomalous High Velocity")
 );
 
 CREATE TABLE alerts (

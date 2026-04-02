@@ -72,4 +72,10 @@ public class UserController {
         UserAnalyticsDTO data = analyticsService.getUserAnalytics(username);
         return aiAgentService.getUserInsights(data);
     }
+
+    @GetMapping("/analytics")
+    public UserAnalyticsDTO getAnalytics() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        return analyticsService.getUserAnalytics(username);
+    }
 }
