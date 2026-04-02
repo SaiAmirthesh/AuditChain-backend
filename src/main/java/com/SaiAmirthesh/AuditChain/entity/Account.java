@@ -15,4 +15,7 @@ public class Account {
     private String holderName;
     private Double balance;
     private String updatedBy;
+    
+    @Column(name = "risk_score")
+    private Double riskScore = 0.0;
 }

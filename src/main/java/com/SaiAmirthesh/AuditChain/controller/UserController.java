@@ -42,7 +42,14 @@ public class UserController {
         UserAnalyticsDTO analytics = analyticsService.getUserAnalytics(username);
         
         Map<String, Object> response = new HashMap<>();
-        response.put("account", account);
+        if (account != null) {
+            response.put("account", account); // Keep for UserDashboard.jsx (expects account.account.balance)
+            response.put("accountNumber", account.getAccountNumber()); // Add for UserTransfer.jsx (expects account.accountNumber)
+            response.put("balance", account.getBalance());
+            response.put("holderName", account.getHolderName());
+            response.put("id", account.getId());
+        }
+        
         response.put("totalIncome", analytics.getTotalIncome());
         response.put("totalExpense", analytics.getTotalExpense());
         return response;

@@ -8,11 +8,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.SaiAmirthesh.AuditChain.util.HashUtil;
 
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class AuditVerificationService {
+    
+    private static final DateTimeFormatter MYSQL_FORMAT = DateTimeFormatter.ofPattern("yy-MM-dd't'hh:mm:ss");
     @Autowired
     private AuditRepository auditRepository;
 
@@ -44,7 +47,11 @@ public class AuditVerificationService {
                     com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
                     com.fasterxml.jackson.databind.JsonNode node = mapper.readTree(log.getNewData());
                     if (node.has("balance")) {
-                        balanceStr = node.get("balance").asText();
+                        balanceStr = "Bal: " + node.get("balance").asText();
+                    } else if (node.has("amount")) {
+                        String from = node.has("from_account") ? node.get("from_account").asText() : "?";
+                        String to = node.has("to_account") ? node.get("to_account").asText() : "?";
+                        balanceStr = "Amt: " + node.get("amount").asText() + " (" + from + " -> " + to + ")";
                     }
                 } catch (Exception e) {}
             }
@@ -59,7 +66,11 @@ public class AuditVerificationService {
             String oldData = log.getOldData() != null ? log.getOldData() : "";
             String newData = log.getNewData() != null ? log.getNewData() : "";
             String changedBy = log.getChangedBy() != null ? log.getChangedBy() : "";
-            String changedAtStr = log.getChangedAt() != null ? log.getChangedAt().truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString() : "";
+            
+            // MySQL trigger: DATE_FORMAT(NOW(), '%y-%m-%dt%h:%i:%s')
+            // Note: %h is 12-hour clock (01-12)
+            String changedAtStr = log.getChangedAt() != null ? log.getChangedAt().format(MYSQL_FORMAT) : "";
+            
             String prevHashStr = (log.getPrevHash() == null || log.getPrevHash().equalsIgnoreCase("null")) ? "" : log.getPrevHash();
 
             String dataToHash = tableName + operation + recordIdStr + oldData + newData + changedBy + changedAtStr + prevHashStr;

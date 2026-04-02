@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 
 @Service
 public class AccountService {
-    
+
     @Autowired
     private AccountRepository accountRepository;
 
@@ -23,7 +23,6 @@ public class AccountService {
 
     @Autowired
     private TransactionRepository transactionRepository;
-
 
     @Transactional
     public String transfer(String fromAcc, String toAcc, Double amount) {
@@ -55,9 +54,7 @@ public class AccountService {
         to.setUpdatedBy(username);
 
         accountRepository.save(from);
-        accountRepository.save(to); 
-
-
+        accountRepository.save(to);
 
         Transaction transaction = new Transaction();
         transaction.setFromAccount(fromAcc);
@@ -68,7 +65,7 @@ public class AccountService {
 
         return "transfer successful";
     }
-    
+
     public java.util.List<Account> getAllAccounts() {
         return accountRepository.findAll();
     }

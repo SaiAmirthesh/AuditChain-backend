@@ -19,11 +19,19 @@ public class AnalyticsService {
     public UserAnalyticsDTO getUserAnalytics(String accountNo) {
         List<Object[]> categoryResults = transactionRepository.getUserCategorySpending(accountNo);
         List<UserAnalyticsDTO.CategorySpending> categorySpending = categoryResults.stream()
-                .map(res -> new UserAnalyticsDTO.CategorySpending(
-                        (String) res[0],
-                        ((Number) res[1]).doubleValue(),
-                        ((Number) res[2]).longValue()
-                ))
+                .map(res -> {
+                    String cat = (String) res[0];
+                    if (cat == null || cat.trim().isEmpty() || cat.equalsIgnoreCase("general")) {
+                        cat = "General";
+                    } else {
+                        cat = cat.substring(0, 1).toUpperCase() + cat.substring(1).toLowerCase();
+                    }
+                    return new UserAnalyticsDTO.CategorySpending(
+                            cat,
+                            ((Number) res[1]).doubleValue(),
+                            ((Number) res[2]).longValue()
+                    );
+                })
                 .collect(Collectors.toList());
 
         Map<String, Object> incomeExpense = transactionRepository.getUserIncomeExpense(accountNo);
